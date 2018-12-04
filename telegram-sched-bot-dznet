@@ -1,0 +1,157 @@
+#! /usr/bin/env python3
+################################################################################
+#               telegram event scheduler bot by dznet v.0.0.1                  #
+#                        https://github.com/dznet                              #
+################################ IMPORT ########################################
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
+import logging
+from random import choice
+from string import ascii_lowercase
+from string import digits
+from sys import exc_info as error
+from sys import stdout
+from telegram import InlineKeyboardButton
+from telegram import InlineKeyboardMarkup
+from telegram.ext import CallbackQueryHandler
+from telegram.ext import CommandHandler
+from telegram.ext import Filters
+from telegram.ext import MessageHandler
+from telegram.ext import RegexHandler
+from telegram.ext import Updater
+from time import sleep
+################################ CONFIG ########################################
+DAYLY = datetime(2018, 12, 3, 13, 25, 4)
+EVENTS = [datetime(2018, 12, 3, 13, 25, digit) for digit in range(1,9)]
+TELEGRAM_BOT_TOKEN = '655665566:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+###############################  LOGGER  #######################################
+logger = logging.getLogger(MODULE_NAME)
+formatter = logging.Formatter(LOG_FORMAT)
+logfile = logging.FileHandler(LOG_PATH)
+logfile.setFormatter(formatter)
+logfile.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logfile)
+################################# Bot ##########################################
+
+class SchedBot():
+
+  __bots = {}
+
+  def __init__(self, token):
+    self.bot = self.get_instance(__bots{token})
+    self.scheduler = BackgroundScheduler()
+    self.keyboard = SchedBotKeyboards()
+    self.menu = SchedBotMenu()
+    self.message = SchedBotMessages()
+    self.updater = Updater(token)
+    self.updater.dispatcher.add_handler(CommandHandler('start', self.menu.start))
+    self.updater.dispatcher.add_handler(MessageHandler(Filters.text, self.menu.start))
+    self.status = True
+
+  def start(self, bot, update):
+    self.scheduler.start()
+    self.updater.start_polling()
+    update.message.reply_text(self.message.start(),
+                              chat_id=ROOTID,
+                              parse_mode='Markdown',
+                              reply_markup=self.keyboard.start())
+
+  def stop(self, bot, update):
+    self.updater.stop()
+    update.message.reply_text(self.message.stop(),
+                              chat_id=ROOTID,
+                              parse_mode='Markdown',
+                              reply_markup=self.keyboard.stop())
+
+  def help(self, bot, update):
+    update.message.reply_text(self.message.help(),
+                              parse_mode='Markdown',
+                              reply_markup=self.keyboard.help())
+
+  def error(self, bot, update):
+    update.message.reply_text(self.message.error(),
+                              chat_id=ROOTID,
+                              parse_mode='Markdown',
+                              reply_markup=self.keyboard.error())
+
+  def schedule_event(self, bot, update, event, time, chat_id):
+    self.scheduler.add_job(event, run_date=time, args=chat_id)
+
+################################ MENU ##########################################
+
+class SchedBotMenu():
+
+  def __init__(self, arg):
+    super(SchedBotKeyboards, self).__init__()
+    self.arg = arg
+
+  def main(bot, update):
+    query = update.callback_query
+    bot.edit_message_text(chat_id=query.message.chat_id,
+                          message_id=query.message.message_id,
+                          text=main_message(),
+                          reply_markup=main())
+
+  def first(bot, update):
+    query = update.callback_query
+    bot.edit_message_text(chat_id=query.message.chat_id,
+                          message_id=query.message.message_id,
+                          text=first_message(),
+                          reply_markup=first())
+
+  def second(bot, update, chat_id, message):
+    query = update.callback_query
+    bot.edit_message_text(chat_id=query.message.chat_id,
+                          message_id=query.message.message_id,
+                          text=message),
+                          reply_markup=second())
+
+############################ Keyboards #########################################
+
+class SchedBotKeyboards():
+
+  def __init__(self, arg):
+    super(SchedBotKeyboards, self).__init__()
+    self.arg = arg
+
+  def main(self):
+    keyboard = [[InlineKeyboardButton('Option 1', callback_data='m1')],
+                [InlineKeyboardButton('Option 2', callback_data='m2')],
+                [InlineKeyboardButton('Option 3', callback_data='m3')]]
+    return InlineKeyboardMarkup(keyboard)
+
+  def first(self):
+    keyboard = [[InlineKeyboardButton('Submenu 1-1', callback_data='m1_1')],
+                [InlineKeyboardButton('Submenu 1-2', callback_data='m1_2')],
+                [InlineKeyboardButton('Main menu', callback_data='main')]]
+    return InlineKeyboardMarkup(keyboard)
+
+  def second(self):
+    keyboard = [[InlineKeyboardButton('Submenu 2-1', callback_data='m2_1')],
+                [InlineKeyboardButton('Submenu 2-2', callback_data='m2_2')],
+                [InlineKeyboardButton('Main menu', callback_data='main')]]
+    return InlineKeyboardMarkup(keyboard)
+
+############################# Messages #########################################
+
+class SchedBotMessages():
+
+  def __init__(self, arg):
+    super(SchedBotMessages, self).__init__()
+    self.arg = arg
+
+  def start(self):
+    returm '*SchedBot* successfuly start@{}'.format(time())
+
+  def main(self):
+    return 'Choose the option in main menu:'
+
+  def first(self):
+    return 'Choose the submenu in first menu:'
+
+  def second(self):
+    return 'Choose the submenu in second menu:'
+
+################################################################################
+################################################################################
